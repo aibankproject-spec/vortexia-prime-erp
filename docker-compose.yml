@@ -1,0 +1,45 @@
+version: '3.8'
+
+services:
+  mongodb:
+    image: mongo:7
+    container_name: vortexia-mongodb
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongodb_data:/data/db
+    restart: unless-stopped
+
+  backend:
+    build: ./backend
+    container_name: vortexia-backend
+    ports:
+      - "5000:5000"
+    environment:
+      - MONGODB_URI=mongodb://mongodb:27017/vortexia_erp
+      - NODE_ENV=development
+      - PORT=5000
+      - JWT_SECRET=vpt_erp_jwt_secret_2026_docker
+      - JWT_REFRESH_SECRET=vpt_erp_refresh_secret_2026_docker
+      - JWT_EXPIRE=15m
+      - JWT_REFRESH_EXPIRE=7d
+      - CLIENT_URL=http://localhost:3000
+    depends_on:
+      - mongodb
+    volumes:
+      - ./backend/uploads:/app/uploads
+    restart: unless-stopped
+
+  frontend:
+    build: ./frontend
+    container_name: vortexia-frontend
+    ports:
+      - "3000:3000"
+    environment:
+      - NEXT_PUBLIC_API_URL=http://localhost:5000/api
+    depends_on:
+      - backend
+    restart: unless-stopped
+
+volumes:
+  mongodb_data:
