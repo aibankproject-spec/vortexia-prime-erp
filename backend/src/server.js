@@ -52,6 +52,7 @@ app.use('/api/inventory', require('./routes/inventoryRoutes'));
 app.use('/api/sales', require('./routes/salesRoutes'));
 app.use('/api/reports', require('./routes/reportRoutes'));
 app.use('/api/notifications', require('./routes/notificationRoutes'));
+app.use('/api/portal', require('./routes/clientPortalRoutes'));
 
 // Health check
 app.get('/api/health', (req, res) => {

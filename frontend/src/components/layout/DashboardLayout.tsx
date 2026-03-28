@@ -1,16 +1,18 @@
 'use client';
 import { useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, usePathname } from 'next/navigation';
 import { useAuthStore, useSidebarStore } from '@/lib/store';
 import Sidebar from './Sidebar';
+import ClientSidebar from './ClientSidebar';
 import TopBar from './TopBar';
 import { cn } from '@/lib/utils';
 import { Toaster } from 'react-hot-toast';
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
-  const { isAuthenticated, isLoading, loadUser } = useAuthStore();
+  const { user, isAuthenticated, isLoading, loadUser } = useAuthStore();
   const { isCollapsed } = useSidebarStore();
   const router = useRouter();
+  const pathname = usePathname();
 
   useEffect(() => {
     loadUser();
@@ -21,6 +23,18 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       router.push('/login');
     }
   }, [isLoading, isAuthenticated, router]);
+
+  // Redirect client to portal, admin to dashboard
+  useEffect(() => {
+    if (!isLoading && isAuthenticated && user) {
+      if (user.role === 'client' && pathname.startsWith('/dashboard') && !pathname.startsWith('/dashboard/portal')) {
+        router.replace('/dashboard/portal');
+      }
+      if (user.role !== 'client' && pathname.startsWith('/dashboard/portal')) {
+        router.replace('/dashboard');
+      }
+    }
+  }, [isLoading, isAuthenticated, user, pathname, router]);
 
   if (isLoading) {
     return (
@@ -35,13 +49,15 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
   if (!isAuthenticated) return null;
 
+  const isClient = user?.role === 'client';
+
   return (
     <div className="min-h-screen bg-surface-50">
       <Toaster position="top-right" toastOptions={{
         className: '!bg-white !shadow-elevated !rounded-xl !text-sm',
         duration: 4000,
       }} />
-      <Sidebar />
+      {isClient ? <ClientSidebar /> : <Sidebar />}
       <TopBar />
       <main className={cn(
         'pt-16 min-h-screen transition-all duration-300',
